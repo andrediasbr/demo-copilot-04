@@ -46,5 +46,22 @@ jobs:
     - name: Push Docker image
       run: docker push ghcr.io/${{ github.repository_owner }}/demo-copilot-04:latest
 
+    - name: Deploy to Azure Container App
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.37.0
+        inlineScript: |
+          az login --service-principal -u ${{ secrets.ARM_CLIENT_ID }} -p ${{ secrets.ARM_CLIENT_SECRET }} --tenant ${{ secrets.ARM_TENANT_ID }}
+          
+          az account set --subscription ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+          az containerapp up \
+          --name demo-copilot-04-app \
+          --resource-group demo-copilot-04-rg \
+          --image ghcr.io/${{ github.repository_owner }}/demo-copilot-04:latest \
+          --registry-server ghcr.io \
+          --registry-username ${{ github.actor }} \
+          --registry-password ${{ secrets.PAT }}
+
     # - name: Test
     #   run: dotnet test --no-build
